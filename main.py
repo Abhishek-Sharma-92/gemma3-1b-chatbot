@@ -12,6 +12,7 @@ prompt = ChatPromptTemplate.from_messages([
 # === Page Config ===
 st.set_page_config(page_title="Chatbox - Gemma3:1b", layout="wide")
 
+# === Complete CSS (you had this empty) ===
 st.markdown("""
 <style>
 .block-container {
@@ -59,6 +60,19 @@ st.markdown("""
     margin-top: 1rem;
 }
 
+/* Fix button styling and alignment */
+.stButton button {
+    pointer-events: auto !important;
+    z-index: 999 !important;
+    cursor: pointer !important;
+    width: 100% !important;
+}
+
+/* Ensure proper column spacing */
+.stButton {
+    width: 100% !important;
+}
+
 /* History styling */
 .chat-item {
     background-color: #f0f2f6;
@@ -82,9 +96,9 @@ st.markdown("""
 
 # === Init Chat State ===
 if "chat_sessions" not in st.session_state:
-    st.session_state.chat_sessions = []  # List of chat sessions
+    st.session_state.chat_sessions = []
 if "current_chat_index" not in st.session_state:
-    st.session_state.current_chat_index = -1  # No active chat initially
+    st.session_state.current_chat_index = -1
 if "user_input" not in st.session_state:
     st.session_state.user_input = ""
 
@@ -122,10 +136,11 @@ def handle_input():
     
     # Add bot response to current chat
     current_chat["messages"].append({"role": "bot", "message": response})
-    st.session_state.user_input = ""  # Clear input
+    st.session_state.user_input = ""
 
 def start_new_chat():
     """Start a new chat session"""
+    print("New chat button clicked!")  # Debug line
     st.session_state.current_chat_index = -1
 
 def select_chat(chat_index):
@@ -136,7 +151,6 @@ def delete_chat(chat_index):
     """Delete a specific chat session"""
     if len(st.session_state.chat_sessions) > chat_index:
         del st.session_state.chat_sessions[chat_index]
-        # Adjust current chat index if necessary
         if st.session_state.current_chat_index == chat_index:
             st.session_state.current_chat_index = -1
         elif st.session_state.current_chat_index > chat_index:
@@ -149,14 +163,20 @@ col1, col2 = st.columns([1, 3])
 with col1:
     print("entry A")
     print(f"{st.session_state.current_chat_index= }")
-    # Header with New Chat button
-    col_title, col_btn = st.columns([2, 1])
+    
+    # Header with New Chat button - FIXED COLUMNS
+    col_title, col_btn = st.columns([2.5, 1.5])  # More space for button
+    
     with col_title:
         st.title("History")
+    
     with col_btn:
-        print("entry A.2")
-        if st.button("New Chat", key="new_chat"):
+        # Add vertical alignment
+        st.markdown("<div style='padding-top: 8px;'>", unsafe_allow_html=True)
+        if st.button("🆕 New", key="new_chat", type="primary", use_container_width=True):
             start_new_chat()
+            st.rerun()  # THIS WAS MISSING!
+        st.markdown("</div>", unsafe_allow_html=True)
     
     # Display chat sessions
     if st.session_state.chat_sessions:
@@ -173,20 +193,20 @@ with col1:
                     help=chat_session['first_question']
                 ):
                     select_chat(i)
+                    st.rerun()  # Add rerun here too
             
             with col_del:
                 if st.button("🗑️", key=f"delete_{i}", help="Delete chat"):
                     delete_chat(i)
                     st.rerun()
     else:
-        #st.info("No chat history yet.")
         print("no chat history yet")
-        pass
 
 # === Right: Chat UI ===
 with col2:
     print("entry B")
     print(f"{st.session_state.current_chat_index= }")
+    
     # Display current chat title
     if st.session_state.current_chat_index >= 0:
         current_chat = st.session_state.chat_sessions[st.session_state.current_chat_index]
